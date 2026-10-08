@@ -6,18 +6,19 @@
 const FB = 'https://www.gstatic.com/firebasejs/13.0.0';
 
 export async function createBackend(config, { slot = '' } = {}) {
-  return config && config.apiKey && config.databaseURL ? firebaseBackend(config) : demoBackend(slot);
+  return config && config.apiKey && config.databaseURL ? firebaseBackend(config, slot) : demoBackend(slot);
 }
 
 /* ---------------- Firebase ---------------- */
-async function firebaseBackend(cfg) {
+async function firebaseBackend(cfg, slot) {
   const [{ initializeApp }, A, D] = await Promise.all([
     import(`${FB}/firebase-app.js`),
     import(`${FB}/firebase-auth.js`),
     import(`${FB}/firebase-database.js`),
   ]);
   const app = initializeApp(cfg);
-  const auth = A.getAuth(app);
+  // Test identities (?as=b) must be separate Firebase users, so keep their login in memory only.
+  const auth = slot ? A.initializeAuth(app, { persistence: A.inMemoryPersistence }) : A.getAuth(app);
   const user = await new Promise((resolve, reject) => {
     const off = A.onAuthStateChanged(auth, (u) => {
       if (u) { off(); resolve(u); }
