@@ -1,5 +1,5 @@
 // Service worker: app works offline after first visit; map tiles you've seen stay cached.
-const VERSION = 'tm-v7';
+const VERSION = 'tm-v8';
 const SHELL = ['./', './index.html', './app.js', './lib.js', './backend.js', './fx.js', './fx.css', './money.js', './expenses.js', './exp.css', './paper.css', './icons.js', './paperart.js', './push.js', './config.js', './manifest.webmanifest', './icons/icon-192.png'];
 const CDN = /^https:\/\/(cdnjs\.cloudflare\.com|www\.gstatic\.com\/firebasejs|fonts\.googleapis\.com|fonts\.gstatic\.com)\//;
 const TILE = /^https:\/\/(tile\.openstreetmap\.org|server\.arcgisonline\.com)\//;
@@ -26,7 +26,7 @@ self.addEventListener('fetch', (e) => {
 async function networkFirst(req) {
   const cache = await caches.open(VERSION);
   try {
-    const res = await fetch(req);
+    const res = await fetch(req, { cache: 'no-cache' });   // revalidate: Pages' 10-min HTTP cache must not mix old and new modules
     if (res.ok) cache.put(req, res.clone());
     return res;
   } catch {
