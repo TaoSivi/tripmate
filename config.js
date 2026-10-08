@@ -15,6 +15,6 @@ export const FIREBASE_CONFIG = {
 
 // Push relay (Cloudflare Worker, see push-worker/). url stays null until the Worker is deployed; the public VAPID key is not secret.
 export const PUSH_CONFIG = {
-  url: null,
+  url: "https://tripmate-push.tao123456789034.workers.dev/push",
   vapid: "BHs_II_B0aN-e1koCV6p9rT1oUe2rRWTqCb0bwYci0L3r6ptNltg8OlsZ-1yLS2mrbsi7GS-vuaN_beLM_FgmiA",
 };

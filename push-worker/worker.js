@@ -11,7 +11,7 @@
 // Environment (Worker settings):
 //   DB_URL            https://<project>-default-rtdb.<region>.firebasedatabase.app
 //   VAPID_PUBLIC      base64url uncompressed P-256 public key (same value the app uses)
-//   VAPID_PRIVATE_JWK JSON of the matching private key (secret)
+//   VAPID_D           base64url private scalar `d` of the same key (secret)
 //   VAPID_SUBJECT     mailto:you@example.com
 //   ALLOWED_ORIGINS   comma list, e.g. https://taosivi.github.io,http://localhost:8767
 
@@ -59,12 +59,18 @@ export async function vapidAuth(endpoint, privateJwk, publicKeyB64u, subject, no
   return `vapid t=${header}.${claims}.${b64u.enc(sig)}, k=${publicKeyB64u}`;
 }
 
+/** The signing key as a JWK, built from the public key (x, y) plus the one secret number d. */
+export function vapidJwk(env) {
+  const pub = b64u.dec(env.VAPID_PUBLIC);
+  return { kty: 'EC', crv: 'P-256', x: b64u.enc(pub.slice(1, 33)), y: b64u.enc(pub.slice(33, 65)), d: env.VAPID_D };
+}
+
 async function sendOne(sub, payload, env, urgent) {
   const body = await encryptPayload(sub, enc.encode(JSON.stringify(payload)));
   const res = await fetch(sub.endpoint, {
     method: 'POST',
     headers: {
-      Authorization: await vapidAuth(sub.endpoint, JSON.parse(env.VAPID_PRIVATE_JWK), env.VAPID_PUBLIC, env.VAPID_SUBJECT || 'mailto:admin@example.com'),
+      Authorization: await vapidAuth(sub.endpoint, vapidJwk(env), env.VAPID_PUBLIC, env.VAPID_SUBJECT || 'mailto:admin@example.com'),
       'Content-Encoding': 'aes128gcm',
       'Content-Type': 'application/octet-stream',
       TTL: urgent ? '3600' : '600',

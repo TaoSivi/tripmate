@@ -7,7 +7,7 @@ const ua = () => { const k = crypto.createECDH('prime256v1'); k.generateKeys(); 
 const vk = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
 const jwk = vk.privateKey.export({ format: 'jwk' });
 const pub = Buffer.concat([Buffer.from([4]), Buffer.from(jwk.x, 'base64url'), Buffer.from(jwk.y, 'base64url')]);
-const env = { DB_URL: 'https://db.example', VAPID_PUBLIC: b64u.enc(pub), VAPID_PRIVATE_JWK: JSON.stringify(jwk), VAPID_SUBJECT: 'mailto:t@example.com', ALLOWED_ORIGINS: 'https://ok.example' };
+const env = { DB_URL: 'https://db.example', VAPID_PUBLIC: b64u.enc(pub), VAPID_D: jwk.d, VAPID_SUBJECT: 'mailto:t@example.com', ALLOWED_ORIGINS: 'https://ok.example' };
 
 const subs = { A: { d1: ua() }, B: { d1: ua(), d2: ua() }, C: { d1: ua() } };
 const pushed = [];
