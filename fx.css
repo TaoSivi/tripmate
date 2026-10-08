@@ -1,0 +1,105 @@
+/* Notification gimmicks — works on top of the app's own tokens (--surface, --ink, --glass, --grad ...). */
+.pin-svg{width:100%;height:auto;display:block;overflow:visible}
+.p-body{fill:#ffd9ea;stroke:#3f3356;stroke-width:4;stroke-linejoin:round}
+.p-ink{fill:#3f3356}
+.p-line{fill:none;stroke:#3f3356;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.p-line.thin{stroke-width:3}
+.p-hi{fill:#fff}
+.p-eye{fill:#fff;stroke:#3f3356;stroke-width:2.5}
+.p-shine{fill:#fff;opacity:.65}
+.p-cheek{fill:#ff6fa5;opacity:.5}
+.p-mouth{fill:#ff6464;stroke:#3f3356;stroke-width:3;stroke-linejoin:round}
+.p-arm-o{fill:none;stroke:#3f3356;stroke-width:11;stroke-linecap:round}
+.p-arm{fill:none;stroke:#ffd9ea;stroke-width:5;stroke-linecap:round}
+.p-tear,.p-sweat{fill:#8fd6ff;stroke:#3f3356;stroke-width:2}
+.p-star{fill:#ffcf5c;stroke:#3f3356;stroke-width:2.5;stroke-linejoin:round}
+
+#fx-layer{position:fixed;inset:0;z-index:2450;pointer-events:none;overflow:hidden}
+.fx-p{position:absolute;will-change:transform,opacity}
+.fx-p.heart{color:#ff79b0;-webkit-text-stroke:1.5px #3f3356;paint-order:stroke fill;line-height:1}
+.fx-p.conf{width:9px;height:14px;border:2px solid #3f3356;border-radius:3px}
+.fx-p.spark svg{width:100%;height:100%;display:block}
+.fx-p.spark path{fill:currentColor;stroke:#3f3356;stroke-width:1.6}
+.fx-p.zz{font:800 20px "Inter",sans-serif;color:#a58bff;-webkit-text-stroke:1.5px #3f3356;paint-order:stroke fill}
+.fx-p.ring{width:70px;height:70px;border:3px solid #ff79b0;border-radius:50%}
+.fx-p.flash{inset:0;background:#fff}
+
+/* banner */
+.fx-banner{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:2400;
+  width:min(440px,calc(100% - 20px));display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;
+  background:var(--glass);-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+  border:2.5px solid #3f3356;border-radius:22px;box-shadow:4px 4px 0 #3f3356,var(--shadow-lg);cursor:pointer;color:var(--ink)}
+:root[data-theme="dark"] .fx-banner{border-color:#0f0b22;box-shadow:4px 4px 0 #0f0b22,var(--shadow-lg)}
+.fx-mascot{flex:none;width:58px;height:62px;margin:-10px 0 -6px 0;border-radius:18px;background:var(--brand-soft);padding:5px 6px 4px;display:block}
+.fx-txt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.4}
+.fx-txt b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx-txt span{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx-banner small{align-self:flex-start;color:var(--muted);font-size:11px;white-space:nowrap}
+.fx-banner.anim{animation:fxDrop .7s cubic-bezier(.3,1.4,.5,1) both}
+.fx-banner.out{animation:fxOut .25s ease-in both}
+.fx-banner.anim .fx-mascot{animation:fxPeek .6s .25s cubic-bezier(.3,1.6,.5,1) both}
+.fx-banner.anim.k-jump .fx-mascot{animation:fxJump 1s .3s ease-out both}
+.fx-banner.anim.k-wave .fx-mascot{animation:fxWave 1.4s .3s ease-in-out both}
+.fx-banner.anim.k-sway .fx-mascot{animation:fxSway 2s .3s ease-in-out both}
+@keyframes fxDrop{0%{transform:translate(-50%,-160%)}55%{transform:translate(-50%,8%)}78%{transform:translate(-50%,-4%)}100%{transform:translate(-50%,0)}}
+@keyframes fxOut{to{transform:translate(-50%,-170%);opacity:0}}
+@keyframes fxPeek{0%{transform:translateY(40px) rotate(10deg) scale(.6);opacity:0}60%{transform:translateY(-6px) rotate(-6deg) scale(1.08);opacity:1}100%{transform:none;opacity:1}}
+@keyframes fxJump{0%,100%{transform:none}20%{transform:translateY(-14px) scale(1.06,.94)}40%{transform:translateY(0) scale(1.08,.9)}60%{transform:translateY(-9px)}80%{transform:translateY(0)}}
+@keyframes fxWave{0%,100%{transform:rotate(0)}25%{transform:rotate(-9deg)}50%{transform:rotate(8deg)}75%{transform:rotate(-5deg)}}
+@keyframes fxSway{0%,100%{transform:rotate(0)}30%{transform:rotate(-6deg) translateY(2px)}60%{transform:rotate(5deg)}}
+
+/* big alert (ping + SOS) */
+.fx-big{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;padding:24px;overflow:hidden;color:#2b1f3f;
+  background:radial-gradient(circle at 50% 36%,#ffe9b0,#ff9ec8 55%,#a58bff)}
+.fx-big.sos{color:#fff;background:radial-gradient(circle at 50% 36%,#ffcf5c,#ff6464 55%,#c4284a)}
+.fx-big.anim{animation:fxShake .5s .1s both}
+.fx-big.sos.anim{animation:fxShake .5s .1s both,fxFlash 1.2s ease-in-out 3}
+.fx-speed{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.fx-speed line{stroke:#fff;opacity:.55}
+.fx-big.anim .fx-speed{animation:fxSpin 2.4s linear 1,fxSpinSlow 60s 2.4s linear infinite}
+.fx-big-in{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;width:min(100%,340px)}
+.fx-big-pin{position:relative;width:132px}
+.fx-big.anim .fx-big-pin{animation:fxPop .65s cubic-bezier(.3,1.6,.5,1) both}
+.fx-big-pin .mark{position:absolute;right:-30px;top:-6px;font:800 38px "Inter",sans-serif;color:#ff6464;-webkit-text-stroke:2.5px #3f3356;paint-order:stroke fill;line-height:1}
+.fx-big.sos .fx-big-pin .mark{color:#fff}
+.fx-big.anim .mark{animation:fxMark .5s .45s cubic-bezier(.3,1.6,.5,1) both}
+.waves i{position:absolute;left:50%;top:50%;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;border:3px solid #fff;opacity:0}
+.fx-big.anim .waves i{animation:fxRing 1.8s ease-out infinite}
+.fx-big .waves i:nth-child(2){animation-delay:.6s}.fx-big .waves i:nth-child(3){animation-delay:1.2s}
+.fx-big h2{font-size:25px;font-weight:800;line-height:1.4;margin:6px 0 0;text-wrap:balance}
+.fx-big.sos h2{color:#fff;-webkit-text-stroke:3px #3f3356;paint-order:stroke fill}
+.fx-big.anim h2,.fx-big.anim .sub,.fx-big.anim .acts{animation:fxZoom .6s .3s cubic-bezier(.3,1.5,.5,1) both}
+.fx-big .sub{margin:0;font-weight:700;background:#ffcf5c;border:2px solid #3f3356;border-radius:999px;padding:0 14px;color:#2b1f3f;font-size:14px}
+.fx-big .sub:empty{display:none}
+.fx-big .acts{display:flex;flex-direction:column;gap:9px;width:100%;margin-top:6px}
+.fx-btn{display:flex;align-items:center;justify-content:center;min-height:50px;border:2.5px solid #3f3356;border-radius:18px;background:#fff;color:#c4284a;font-weight:800;font-size:16px;box-shadow:0 4px 0 #3f3356;text-decoration:none;cursor:pointer;font-family:inherit}
+.fx-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #3f3356}
+.fx-btn.main{background:#ff79b0;color:#2b1f3f}
+.fx-btn.yellow{background:#ffcf5c;color:#2b1f3f}
+.fx-btn[hidden]{display:none}
+@keyframes fxShake{0%,100%{transform:none}15%{transform:translate(-8px,2px)}30%{transform:translate(7px,-2px)}45%{transform:translate(-5px,1px)}60%{transform:translate(4px,0)}75%{transform:translate(-2px,0)}}
+@keyframes fxFlash{0%,100%{filter:none}30%,60%{filter:brightness(1.3) saturate(1.2)}}
+@keyframes fxSpin{to{transform:rotate(360deg)}}
+@keyframes fxSpinSlow{to{transform:rotate(360deg)}}
+@keyframes fxPop{0%{transform:scale(.2);opacity:0}65%{transform:scale(1.12);opacity:1}100%{transform:none}}
+@keyframes fxMark{0%{transform:scale(0) rotate(-40deg)}60%{transform:scale(1.4) rotate(12deg)}100%{transform:none}}
+@keyframes fxZoom{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.05);opacity:1}100%{transform:none}}
+@keyframes fxRing{0%{transform:scale(.4);opacity:.8}100%{transform:scale(2.6);opacity:0}}
+
+/* stickers in chat */
+.sticker-msg{width:104px;padding:2px}
+.stk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 2px}
+.stk-grid button{border:2px solid var(--line-2);background:var(--surface-2);border-radius:18px;padding:8px 6px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:700;color:var(--ink-2)}
+.stk-grid button:active{background:var(--brand-soft)}
+.stk-grid .pin-svg{width:66px}
+
+/* try-out list in the trip tab */
+.try-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:12px 0 2px}
+.try-grid button{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line-2);background:var(--surface-2);border-radius:14px;padding:8px 10px;font-weight:600;font-size:13px;cursor:pointer;text-align:left;line-height:1.3}
+.try-grid button:active{background:var(--brand-soft)}
+.try-grid .em{font-size:20px}
+.try-grid .new{margin-left:auto;font-size:10px;font-weight:800;color:#fff;background:var(--grad);border-radius:999px;padding:0 7px}
+
+@media (prefers-reduced-motion:reduce){
+  .fx-banner,.fx-banner .fx-mascot,.fx-big,.fx-big *{animation:none!important}
+}

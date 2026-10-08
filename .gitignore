@@ -1,0 +1,4 @@
+_shots/
+.claude/
+node_modules/
+*.log
