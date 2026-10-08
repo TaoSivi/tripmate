@@ -1,6 +1,6 @@
 // Service worker: app works offline after first visit; map tiles you've seen stay cached.
-const VERSION = 'tm-v5';
-const SHELL = ['./', './index.html', './app.js', './lib.js', './backend.js', './fx.js', './fx.css', './money.js', './expenses.js', './exp.css', './paper.css', './icons.js', './paperart.js', './config.js', './manifest.webmanifest', './icons/icon-192.png'];
+const VERSION = 'tm-v6';
+const SHELL = ['./', './index.html', './app.js', './lib.js', './backend.js', './fx.js', './fx.css', './money.js', './expenses.js', './exp.css', './paper.css', './icons.js', './paperart.js', './push.js', './config.js', './manifest.webmanifest', './icons/icon-192.png'];
 const CDN = /^https:\/\/(cdnjs\.cloudflare\.com|www\.gstatic\.com\/firebasejs|fonts\.googleapis\.com|fonts\.gstatic\.com)\//;
 const TILE = /^https:\/\/(tile\.openstreetmap\.org|server\.arcgisonline\.com)\//;
 const MAX_TILES = 600;
@@ -58,6 +58,23 @@ async function tile(req) {
     return Response.error();
   }
 }
+
+// Push from the relay Worker. Chrome requires every push to show a notification, so when the app is already on
+// screen (the in-app banner covers it) we show it and close it straight away.
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = { title: 'TripMate', body: e.data ? e.data.text() : '' }; }
+  e.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const visible = wins.some((w) => w.visibilityState === 'visible');
+    const tag = d.tag || 'tm-push';
+    await self.registration.showNotification(d.title || 'TripMate', {
+      body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag, renotify: true,
+      requireInteraction: !!d.urgent, vibrate: d.urgent ? [500, 200, 500, 200, 500] : [120],
+    });
+    if (visible && !d.urgent) setTimeout(async () => { (await self.registration.getNotifications({ tag })).forEach((n) => n.close()); }, 800);
+  })());
+});
 
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();

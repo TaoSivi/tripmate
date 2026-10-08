@@ -33,6 +33,7 @@ async function firebaseBackend(cfg, slot) {
   return {
     mode: 'firebase',
     uid: user.uid,
+    idToken: () => user.getIdToken(),
     now: () => Date.now() + offset,
     newKey: (p) => D.push(r(p)).key,
     set: (p, v) => D.set(r(p), v),

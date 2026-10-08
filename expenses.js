@@ -435,5 +435,5 @@ export function createExpenses(ctx) {
       if (p) { const [cur, from, to, amt] = p.dataset.pay.split('|'); markPaid(cur, from, to, amt); }
     });
   }
-  return { render, wire, openDetail, openForm, summary, openFromChat: () => openForm(null, { stay: true }) };
+  return { render, wire, openDetail, openForm, summary, openFromChat: () => openForm(null, { stay: true }), exportCsv, copySummary, hasItems: () => list().length > 0 };
 }

@@ -57,6 +57,14 @@
             ".write": "auth != null && root.child('trips').child($code).child('members').child(auth.uid).exists() && (!data.exists() || root.child('trips').child($code).child('exp').child($id).child('rec').val() === auth.uid || root.child('trips').child($code).child('exp').child($id).child('by').val() === auth.uid || root.child('trips').child($code).child('info/owner').val() === auth.uid)",
             ".validate": "!newData.exists() || (newData.isString() && newData.val().beginsWith('data:image/') && newData.val().length < 400000)"
           }
+        },
+        "push": {
+          "$uid": {
+            "$dev": {
+              ".write": "auth != null && root.child('trips').child($code).child('members').child(auth.uid).exists() && (auth.uid === $uid || !newData.exists())",
+              ".validate": "!newData.exists() || (newData.hasChildren(['endpoint', 'keys']) && newData.child('endpoint').isString() && newData.child('endpoint').val().length < 800 && newData.child('endpoint').val().beginsWith('https://') && newData.child('keys').hasChildren(['p256dh', 'auth']))"
+            }
+          }
         }
       }
     }

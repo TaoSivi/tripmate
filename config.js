@@ -12,3 +12,9 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: "25125371778",
   appId: "1:25125371778:web:d155192ce05e3807af599b",
 };
+
+// Push relay (Cloudflare Worker, see push-worker/). url stays null until the Worker is deployed; the public VAPID key is not secret.
+export const PUSH_CONFIG = {
+  url: null,
+  vapid: "BHs_II_B0aN-e1koCV6p9rT1oUe2rRWTqCb0bwYci0L3r6ptNltg8OlsZ-1yLS2mrbsi7GS-vuaN_beLM_FgmiA",
+};

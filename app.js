@@ -3,6 +3,7 @@ import * as FX from './fx.js';
 import * as M from './money.js';
 import { ic, hydrate } from './icons.js';
 import { paintScenes } from './paperart.js';
+import { createPush } from './push.js';
 import { createExpenses } from './expenses.js';
 import { createBackend } from './backend.js';
 import { FIREBASE_CONFIG } from './config.js';
@@ -289,6 +290,7 @@ async function enterTrip(code, info) {
   switchTab('map');
   renderAll();
   maybeStartGeo();
+  PUSH.ensure();
 }
 
 function attachListeners() {
@@ -349,12 +351,52 @@ async function leaveTrip() {
     await Promise.all([S.be.remove(P(`loc/${uid}`)), S.be.remove(P(`presence/${uid}`)), S.be.remove(P(`sos/${uid}`))]);
     await S.be.remove(P(`members/${uid}`));
   } catch { /* offline — Firebase queues the writes */ }
+  PUSH.forget(S.code, uid);
   store.set('recent', store.get('recent', []).filter((r) => r.code !== S.code));
   exitTrip('ອອກຈາກທຣິບແລ້ວ');
 }
 
+// Plain-text copy of the chat (text only; photos stay in the app) so it can be kept before the trip is deleted.
+function exportChat() {
+  const lines = [`TripMate · ${S.info?.name || ''} · ${S.code}`, ''];
+  for (const el of $('msgs').children) {
+    const m = el._m;
+    if (!m) continue;
+    const d = new Date(m.ts), pad = (n) => String(n).padStart(2, '0');
+    const t = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const body = m.type === 'text' ? m.text : m.type === 'sys' ? m.text : m.type === 'img' ? '[ຮູບ]' : m.type === 'stk' ? '[ສະຕິກເກີ]' : m.type === 'loc' ? `[ຕຳແໜ່ງ ${m.lat},${m.lng}]`
+      : m.type === 'meet' ? `[ນັດພົບ ${m.time || ''} ${m.text || ''}]` : m.type === 'sos' ? '[SOS]' : m.type === 'exp' ? `[ລາຍຈ່າຍ ${M.fmtMoney(m.amt, m.cur)} ${m.text || ''}]` : m.type === 'ping' ? '[ຖາມຢູ່ໃສ]' : '';
+    lines.push(`${t}  ${memberName(m.uid, m.name)}: ${body}`);
+  }
+  const url = URL.createObjectURL(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/plain;charset=utf-8' }));
+  const a = document.createElement('a'); a.href = url; a.download = `tripmate_${S.code}_chat.txt`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast('ດາວໂຫຼດແຊັດແລ້ວ (.txt)');
+}
+
+// Delete confirmation that first offers to save what will disappear.
+function confirmDelete() {
+  return new Promise((resolve) => {
+    let done = false;
+    const fin = (v) => { if (!done) { done = true; resolve(v); } };
+    modal({
+      title: 'ລຶບທຣິບນີ້?',
+      html: `<p class="muted">ຂໍ້ຄວາມ, ຮູບ, ຕຳແໜ່ງ, ລາຍຈ່າຍ ແລະ ບິນ ຈະຖືກລຶບຖາວອນ ສຳລັບທຸກຄົນ ແລະ ກູ້ຄືນບໍ່ໄດ້.</p>
+        <div class="del-exp"><b>ເກັບໄວ້ກ່ອນລຶບ:</b>
+          ${EXP.hasItems() ? `<button class="btn sm" id="dx-csv">${ic('download')} CSV ລາຍຈ່າຍ</button><button class="btn sm" id="dx-sum">${ic('copy')} ສຳເນົາສະຫຼຸບ</button>` : ''}
+          <button class="btn sm" id="dx-chat">${ic('file')} ແຊັດ (.txt)</button></div>`,
+      actions: [{ label: 'ຍົກເລີກ', onClick: () => fin(false) }, { label: 'ລຶບຖາວອນ', cls: 'danger', onClick: () => fin(true) }],
+    });
+    const bg = $('modal-root').lastElementChild;
+    bg.querySelector('#dx-csv')?.addEventListener('click', () => EXP.exportCsv());
+    bg.querySelector('#dx-sum')?.addEventListener('click', () => EXP.copySummary());
+    bg.querySelector('#dx-chat')?.addEventListener('click', exportChat);
+    new MutationObserver((_, obs) => { if (!bg.isConnected) { obs.disconnect(); fin(false); } }).observe($('modal-root'), { childList: true });
+  });
+}
+
 async function deleteTrip() {
-  if (!(await confirmBox('ລຶບທຣິບນີ້?', 'ຂໍ້ຄວາມ, ຮູບ ແລະ ຕຳແໜ່ງທັງໝົດຈະຖືກລຶບຖາວອນ ສຳລັບທຸກຄົນ.', 'ລຶບຖາວອນ', true))) return;
+  if (!(await confirmDelete())) return;
   S.leaving = true;
   const code = S.code;
   try { await S.be.remove(`trips/${code}`); }
@@ -459,6 +501,17 @@ function watchGroup() {
     }
   }
   S.locInit = true;
+}
+
+/* =================== push to the others when the app is closed =================== */
+function pushFor(m) {
+  if (!PUSH.configured()) return;
+  const who = S.profile?.name || 'ໝູ່', title = S.info?.name || 'TripMate';
+  const preview = { text: m.text, img: '📷 ສົ່ງຮູບມາ', stk: 'ສົ່ງສະຕິກເກີ', loc: '📍 ແຊຣ໌ຕຳແໜ່ງ', meet: `🚩 ຕັ້ງຈຸດນັດພົບ ${m.time || ''}`, exp: m.kind === 'pay' ? '💸 ບັນທຶກການໂອນເງິນ' : `💰 ຈ່າຍ ${M.fmtMoney(m.amt || 0, m.cur || 'LAK')} ${m.text || ''}` }[m.type];
+  if (m.type === 'sos') return PUSH.notify({ title: `🆘 SOS ຈາກ ${who}`, body: 'ຕ້ອງການຄວາມຊ່ວຍເຫຼືອ! ເປີດແອັບເບິ່ງຕຳແໜ່ງ', urgent: true, tag: 'tm-sos' });
+  if (m.type === 'ping') return PUSH.notify({ title, body: `📣 ${who} ຖາມວ່າເຈົ້າຢູ່ໃສ?`, to: m.to, tag: 'tm-ping' });
+  if (m.type === 'sys') return m.ev === 'join' ? PUSH.notify({ title, body: `👋 ${who} ເຂົ້າທຣິບແລ້ວ` }) : undefined;
+  if (preview) PUSH.notify({ title, body: `${who}: ${preview}` });
 }
 
 /* =================== presence & visibility =================== */
@@ -929,6 +982,7 @@ async function sendMsg(obj) {
   S.pending.add(key);
   try {
     await S.be.set(P(`msgs/${key}`), msg);
+    pushFor(msg);
   } catch {
     toast('ສົ່ງຂໍ້ຄວາມບໍ່ສຳເລັດ');
     document.querySelector(`[data-k="${key}"]`)?.remove();
@@ -988,6 +1042,7 @@ async function sendPhoto(file) {
     await S.be.set(P(`msgs/${key}`), { uid: S.uid, name: S.profile.name, ts: S.be.now(), type: 'img', w, h });
     S.pending.delete(key);
     document.querySelector(`[data-k="${key}"]`)?.classList.remove('pending');
+    pushFor({ type: 'img' });
   } catch (e) {
     toast(e.message && /ພື້ນທີ່/.test(e.message) ? e.message : 'ສົ່ງຮູບບໍ່ສຳເລັດ');
   }
@@ -1362,6 +1417,11 @@ function renderTrip() {
   else if (Notification.permission === 'denied') { nb.hidden = true; ns.textContent = 'ຖືກປິດໃນການຕັ້ງຄ່າ browser'; }
   else { nb.hidden = false; ns.textContent = 'ເຕືອນເມື່ອມີຂໍ້ຄວາມ ຫຼື SOS'; }
 
+  const ps = PUSH.state();
+  $('push-row').hidden = ps === 'unconfigured';
+  $('sw-push').checked = ps === 'on';
+  $('sw-push').disabled = ps === 'denied' || ps === 'unsupported' || ps === 'ios-install';
+  $('push-sub').textContent = { on: 'ເປີດແລ້ວ — ໄດ້ຮັບຂໍ້ຄວາມ, SOS, ຖາມຢູ່ໃສ ເຖິງວ່າປິດແອັບ', off: 'ປິດຢູ່ — ເປີດເພື່ອຮັບແຈ້ງເຕືອນຕອນປິດແອັບ', denied: 'ຖືກບລັອກໃນການຕັ້ງຄ່າ browser', 'ios-install': 'iPhone: ຕ້ອງ Add to Home Screen ກ່ອນ', unsupported: 'ເຄື່ອງນີ້ບໍ່ຮອງຮັບ', unconfigured: '' }[ps];
   $('delete-trip').hidden = !isOwner;
   $('about').textContent = `TripMate v${VERSION} · ${S.be.mode === 'demo' ? 'ໂໝດທົດລອງ (ໃນເຄື່ອງ)' : 'ເຊື່ອມ Firebase'}`;
   renderInstall();
@@ -1614,6 +1674,14 @@ function wireUi() {
   $('try-grid').innerHTML = TRY.map((t) => `<button data-t="${t.k}"><span class="em">${ic(t.ic)}</span><span>${t.n}</span>${t.isNew ? '<span class="new">ໃໝ່</span>' : ''}</button>`).join('');
   $('try-grid').addEventListener('click', (e) => { const b = e.target.closest('[data-t]'); if (b) { unlockAudio(); tryAlert(b.dataset.t); } });
   $('notif-btn').onclick = askNotify;
+  $('sw-push').onchange = async (e) => {
+    const was = PUSH.state();
+    const st = e.target.checked ? await PUSH.enable() : await PUSH.disable();
+    renderTrip();
+    if (e.target.checked && st === 'on') toast('ເປີດ Push ແລ້ວ ✓');
+    else if (e.target.checked) toast(st === 'denied' ? 'ຖືກບລັອກ — ເປີດໃນການຕັ້ງຄ່າ browser' : 'ເປີດ Push ບໍ່ສຳເລັດ');
+    void was;
+  };
   $('skin-seg').addEventListener('click', (e) => {
     const b = e.target.closest('[data-v]');
     if (!b) return;
@@ -1636,6 +1704,8 @@ const EXP = createExpenses({
   say: (...a) => say(...a),
   nameOf: (u) => S.members[u]?.name || 'ໝູ່ (ອອກແລ້ວ)',
 });
+
+const PUSH = createPush({ S, P, store, isIOS, standalone });
 
 applySkin();
 applyFx();

@@ -109,3 +109,6 @@
 .composer{gap:2px}
 
 .xs-payer{display:flex;align-items:center;gap:8px;margin:8px 4px 0;font-size:13px;font-weight:700;color:var(--muted)}
+
+.del-exp{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface-2);border-radius:16px;padding:10px 12px;margin-top:8px}
+.del-exp b{width:100%;font-size:13px}
