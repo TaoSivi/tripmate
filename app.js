@@ -15,6 +15,7 @@ const params = new URLSearchParams(location.search);
 const SLOT = (params.get('as') || '').replace(/[^a-z0-9]/gi, '').slice(0, 8);
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+if (isIOS) document.documentElement.classList.add('ios');   // lets CSS drop the effects WebKit renders slowly
 const coarse = matchMedia('(pointer: coarse)').matches;
 const darkMq = matchMedia('(prefers-color-scheme: dark)');
 

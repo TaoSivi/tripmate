@@ -202,10 +202,14 @@ nav.tabs button[aria-selected="true"]{color:var(--brand);background:var(--brand-
 .hint{position:absolute;left:50%;top:calc(var(--safe-t) + 150px);transform:translateX(-50%);z-index:650;background:rgba(11,18,32,.88);color:#fff;padding:8px 8px 8px 16px;border-radius:999px;font-size:14px;display:flex;gap:10px;align-items:center;white-space:nowrap;box-shadow:var(--shadow)}
 .hint .btn{min-height:32px;padding:4px 12px;font-size:13px;border-radius:999px;background:rgba(255,255,255,.18);color:#fff;border:0}
 
-.cards{position:absolute;left:0;right:0;bottom:var(--dock);z-index:500;display:flex;gap:10px;overflow-x:auto;padding:6px 12px 8px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.cards{position:absolute;left:0;right:0;bottom:var(--dock);z-index:500;display:flex;gap:10px;overflow-x:auto;padding:6px 12px 8px;scroll-snap-type:x proximity;scrollbar-width:none}
 .cards::-webkit-scrollbar{display:none}
 .cards{overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 .mcard.glass{-webkit-backdrop-filter:none;backdrop-filter:none}
+html{touch-action:manipulation}
+/* iOS Safari: a CSS filter on the moving tile layer and live blur behind panels make panning/scrolling stall */
+html.ios .tiles-soft{filter:none!important}
+html.ios .glass,html.ios .modal-bg,html.ios .toast,html.ios .fx-banner,html.ios .xs-f{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 .mcard{flex:none;width:224px;scroll-snap-align:start;border-radius:22px;padding:12px;cursor:pointer;text-align:left;color:var(--ink)}
 .mc-top{display:flex;align-items:center;gap:10px}
 .mc-top .grow{flex:1;min-width:0}
