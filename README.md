@@ -103,7 +103,13 @@ export const FIREBASE_CONFIG = {
 
 - **ແຊຣ໌ຕຳແໜ່ງໄດ້ສະເພາະຕອນເປີດແອັບຢູ່ໜ້າຈໍ.** ປິດຈໍ ຫຼື ສະຫຼັບແອັບ → ໝູ່ຈະເຫັນ "ຕຳແໜ່ງລ່າສຸດ X ນາທີກ່ອນ" (ໝຸດເປັນສີເທົາເມື່ອເກີນ 10 ນາທີ).
   ວິທີແກ້ເວລາແຍກກັນ: ເປີດ **"ເປີດຈໍຄ້າງ"** (ກິນແບັດຫຼາຍຂຶ້ນ). ຖ້າຕ້ອງການແຊຣ໌ຕອນປິດຈໍແທ້ໆ ຕ້ອງເຮັດເປັນແອັບແທ້ (Capacitor) — ໄລຍະ 2 ຂອງແຜນ.
-- **ແຈ້ງເຕືອນ**: ເຕືອນໄດ້ຕອນແອັບເປີດຢູ່ (ສຽງ + ຂໍ້ຄວາມ). ຍັງບໍ່ມີ push ຕອນປິດແອັບ ເພາະຕ້ອງມີ server (Cloud Functions ຕ້ອງຜູກບັດ).
+- **ແຈ້ງເຕືອນ**: ຕອນແອັບເປີດ = ສຽງ + ຂໍ້ຄວາມໃນແອັບ. ຕອນປິດແອັບ = **Web Push** ຜ່ານ Cloudflare Worker ຟຣີ (ບໍ່ຜູກບັດ, ບໍ່ໃຊ້ Blaze). ເປີດໃນ ເຮັດ → "ແຈ້ງເຕືອນຕອນປິດແອັບ (Push)". iPhone ຕ້ອງ Add to Home Screen ກ່ອນ (iOS 16.4+).
+
+### Push relay (push-worker/)
+- `worker.js` = Cloudflare Worker; ຜູ້ສົ່ງຍື່ນ Firebase ID token → Worker ອ່ານ `trips/{code}/push` ດ້ວຍ token ນັ້ນ (rules ອະນຸຍາດສະເພາະສະມາຊິກ) → ເຂົ້າລະຫັດ (RFC 8291) + ເຊັນ VAPID (RFC 8292) ແລ້ວສົ່ງ.
+- Environment: `DB_URL`, `VAPID_PUBLIC`, `VAPID_SUBJECT`, `ALLOWED_ORIGINS` (variables) + `VAPID_D` (secret, ກະແຈສ່ວນຕົວ — ຢ່າໃສ່ໃນ repo).
+- `config.js` → `PUSH_CONFIG.url` = URL ຂອງ Worker + `/push`; `vapid` = ກະແຈສາທາລະນະ.
+- ທົດສອບ: `node push-worker/test-worker.mjs`.
 - **ແບັດ %** ສະແດງສະເພາະ Android (iPhone ບໍ່ໃຫ້ເວັບອ່ານແບັດ).
 - ຮູບເກັບໃນ Realtime Database (ບີບອັດ ≤ 300KB/ຮູບ). ແຜນຟຣີເກັບໄດ້ 1GB ≈ 3,000 ຮູບ — ລຶບທຣິບເກົ່າຖິ້ມເມື່ອທ່ຽວແລ້ວ (ແຖບ ທຣິບ → ລຶບທຣິບນີ້).
 - ລະຫັດທຣິບ = ກະແຈເຂົ້າທຣິບ. ຢ່າໂພສລະຫັດໃນທີ່ສາທາລະນະ.
