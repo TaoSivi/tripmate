@@ -10,7 +10,7 @@ const BILL_LIMIT = 380000;   // chars of data-URL; database.rules.json caps at 4
 
 export function createExpenses(ctx) {
   const { S, $, esc, P, toast, confirmBox, modal, avatar, sendMsg, haptic, store, say, viewImage, nameOf, switchTab, FX } = ctx;
-  let filterNoBill = false;
+  let filterNoBill = false, dirty = false, lastSum = '', lastList = '';
   const billCache = new Map();
 
   /* ---------- data helpers ---------- */
@@ -68,6 +68,8 @@ export function createExpenses(ctx) {
   /* ---------- rendering ---------- */
   function render() {
     if (!S.code || !$('exp-sum')) return;
+    if (S.tab !== 'exp') { dirty = true; return; }
+    dirty = false;
     const items = list();
     const T = M.totals(items), L = M.ledger(items);
     const memberCount = Object.keys(S.members).length || 1;
@@ -99,8 +101,7 @@ export function createExpenses(ctx) {
     if (missing.length) {
       sum += `<button class="x-warn ${filterNoBill ? 'on' : ''}" id="x-filter">${ic('warn')} ບໍ່ມີບິນ ${missing.length} ລາຍການ <span>${filterNoBill ? 'ສະແດງທັງໝົດ' : 'ກົດເພື່ອກັ່ນຕອງ'}</span></button>`;
     }
-    $('exp-sum').innerHTML = sum;
-    paintScenes($('exp-sum'));
+    if (sum !== lastSum) { lastSum = sum; $('exp-sum').innerHTML = sum; paintScenes($('exp-sum')); }
 
     const shown = filterNoBill ? missing : items;
     let html = '', lastDay = '';
@@ -116,7 +117,7 @@ export function createExpenses(ctx) {
           ${e.kind === 'pay' ? '<span class="x-badge pay">ໂອນຄືນ</span>' : e.bill ? `<span class="x-badge ok">${ic('receipt')} ມີບິນ</span>` : `<span class="x-badge no">${ic('warn')} ບໍ່ມີບິນ · ${esc(nbLabel(e))}</span>`}</span>
         <span class="x-amt ${e.kind === 'pay' ? 'pay' : ''}">${M.fmtMoney(e.amt, e.cur)}</span></button>`;
     }
-    $('exp-list').innerHTML = html;
+    if (html !== lastList) { lastList = html; $('exp-list').innerHTML = html; }
   }
 
   /* ---------- add / edit sheet ---------- */

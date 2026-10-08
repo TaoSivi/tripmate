@@ -29,7 +29,7 @@ nav.tabs button .pi{width:23px;height:23px}
 /* ---------- scene strips (only visible in the paper skin) ---------- */
 .scene-strip{display:none}
 :root[data-skin="paper"] .scene-strip{display:block;position:relative;overflow:hidden;height:var(--sh,110px);border-radius:22px;
-  background:linear-gradient(180deg,var(--pa-sky-1) 0%,var(--pa-sky-2) 100%)}
+  background:linear-gradient(180deg,var(--pa-sky-1) 0%,var(--pa-sky-2) 100%);contain:layout paint style;transform:translateZ(0)}
 .pa-scene{position:absolute;inset:0;width:100%;height:100%;display:block}
 .pa-sun circle{fill:var(--pa-sun)}.pa-sun .pa-sun2{fill:var(--pa-sun2)}
 .pa-cloud path{fill:var(--pa-cloud)}

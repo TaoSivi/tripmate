@@ -722,8 +722,11 @@ function stateOf(uid, p, now) {
   return uid === S.uid && sharingActive() && S.me ? 'live' : U.locState(p, now);
 }
 
+let mapDirty = false;
 function renderMap() {
   if (!map || !S.code) return;
+  if (S.tab !== 'map') { mapDirty = true; return; }
+  mapDirty = false;
   const now = S.be.now();
   const seen = new Set();
   for (const [uid, m] of Object.entries(S.members)) {
@@ -815,8 +818,19 @@ function fitAll() {
 const ARROW = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 19 20l-7-4-7 4z"/></svg>';
 const NAV_IC = ic('locate');
 
+// The card strip is a swipeable scroller: rewriting it mid-swipe made it stick. Hold updates while a finger is on it,
+// skip them while another tab is open, and patch only the cards whose content changed.
+let cardsBusy = false, cardsDirty = false, cardsTimer = 0;
+function cardsHold() { cardsBusy = true; clearTimeout(cardsTimer); }
+function cardsRelease() {
+  clearTimeout(cardsTimer);
+  cardsTimer = setTimeout(() => { cardsBusy = false; if (cardsDirty) renderCards(); }, 450);
+}
+
 function renderCards() {
   if (!S.code) return;
+  if (S.tab !== 'map' || cardsBusy) { cardsDirty = true; return; }
+  cardsDirty = false;
   const now = S.be.now();
   const rows = Object.entries(S.members).map(([uid, m]) => {
     const p = posOf(uid);
@@ -824,7 +838,7 @@ function renderCards() {
     return { uid, m, p, d };
   }).sort((a, b) => (a.uid === S.uid ? -1 : b.uid === S.uid ? 1 : (a.d ?? 1e12) - (b.d ?? 1e12)));
 
-  $('cards').innerHTML = rows.map(({ uid, m, p, d }) => {
+  const items = rows.map(({ uid, m, p, d }) => {
     const mine = uid === S.uid;
     const st = mine ? (sharingActive() && S.me ? 'live' : 'off') : U.locState(p, now);
     const paused = S.pauseUntil > Date.now();
@@ -844,11 +858,22 @@ function renderCards() {
       ? `<button class="mini ${S.wake ? 'on' : ''}" data-act="wake">${ic('bulb')} ຈໍຄ້າງ</button><button class="mini ${paused ? 'on' : ''}" data-act="pause">${ic('pause')} ${paused ? 'ເປີດຄືນ' : 'ຢຸດ 1 ຊມ'}</button>`
       : `${p && p.lat != null ? `<a class="mini" data-act="nav" href="${U.mapsUrl(p.lat, p.lng)}" target="_blank" rel="noopener">${NAV_IC}ນຳທາງ</a>` : ''}<button class="mini" data-act="ping">${ic('mega')} ຖາມຢູ່ໃສ</button>`;
 
-    return `<div class="mcard glass ${st} ${S.sos[uid] ? 'sos' : ''}" data-uid="${esc(uid)}" role="button" tabindex="0">
+    const html = `<div class="mcard glass ${st} ${S.sos[uid] ? 'sos' : ''}" data-uid="${esc(uid)}" role="button" tabindex="0">
       <div class="mc-top">${avatar(m, st === 'live' ? 'ring' : '')}<div class="grow"><div class="mc-name">${esc(m.name)}${mine ? ' (ຂ້ອຍ)' : ''}</div><div class="mc-sub">${esc(sub)}</div></div></div>
       <div class="mc-mid">${tags.join('')}</div>
       <div class="mc-act">${acts}</div></div>`;
-  }).join('');
+    return { uid, html };
+  });
+  const box = $('cards'), cur = box.children;
+  const same = cur.length === items.length && items.every((it, i) => cur[i].dataset.uid === it.uid);
+  const make = (html) => { const t = document.createElement('template'); t.innerHTML = html; const el = t.content.firstElementChild; el._h = html; return el; };
+  if (same) {
+    items.forEach((it, i) => { if (cur[i]._h !== it.html) cur[i].replaceWith(make(it.html)); });
+  } else {
+    const x = box.scrollLeft;
+    box.replaceChildren(...items.map((it) => make(it.html)));
+    box.scrollLeft = x;
+  }
 }
 
 function setPicking(on) {
@@ -907,12 +932,16 @@ function renderHeads() {
   const n = list.length;
   const on = Object.keys(S.members).filter((u) => S.presence[u]?.on).length;
   const name = S.info?.name || 'ທຣິບ';
+  const sub = `${n} ຄົນ · ອອນລາຍ ${on}`, st1 = avatarStack(list), st2 = avatarStack(list, 3);
+  const key = `${name}|${sub}|${st1}`;
+  if (renderHeads.k === key) return;
+  renderHeads.k = key;
   $('map-title').textContent = name;
-  $('map-sub').textContent = `${n} ຄົນ · ອອນລາຍ ${on}`;
-  $('map-stack').innerHTML = avatarStack(list);
+  $('map-sub').textContent = sub;
+  $('map-stack').innerHTML = st1;
   $('chat-title').textContent = name;
-  $('chat-sub').textContent = `${n} ຄົນ · ອອນລາຍ ${on}`;
-  $('chat-stack').innerHTML = avatarStack(list, 3);
+  $('chat-sub').textContent = sub;
+  $('chat-stack').innerHTML = st2;
 }
 
 function renderStatus() {
@@ -971,6 +1000,8 @@ function showPing(m) {
 /* =================== chat =================== */
 function resetMsgs() {
   S.msgIds.clear(); S.pending.clear();
+  imgObs && imgObs.disconnect();
+  msgNear = true;
   $('msgs').innerHTML = '<div class="empty" id="msgs-empty"><div class="big">💬</div>ຍັງບໍ່ມີຂໍ້ຄວາມ<br>ທັກທາຍໝູ່ເລີຍ!</div>';
 }
 
@@ -1130,14 +1161,18 @@ function addMsg(k, m) {
   S.msgIds.add(k);
   const box = $('msgs');
   $('msgs-empty')?.remove();
-  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 140;
+  const nearBottom = msgNear;
   const wrap = document.createElement('div');
   wrap.innerHTML = msgHtml(k, m);
   const el = wrap.firstElementChild;
   el._m = m;
   // Keys sort by time; insert in order in case an older message arrives late.
+  // Almost always the newest message: look from the end instead of scanning the whole list.
   let after = null;
-  for (const c of box.children) if (c.dataset.k && c.dataset.k > k) { after = c; break; }
+  for (let c = box.lastElementChild; c; c = c.previousElementSibling) {
+    if (!c.dataset.k) continue;
+    if (c.dataset.k > k) after = c; else break;
+  }
   box.insertBefore(el, after);
 
   const prev = prevMsgEl(el);
@@ -1149,10 +1184,10 @@ function addMsg(k, m) {
   } else if (el.classList.contains('msg') && prev.classList.contains('msg') && prev.dataset.uid === m.uid && m.ts - +prev.dataset.ts < 5 * 60000) {
     el.classList.add('cont');
   }
-  if (m.type === 'img') loadImg(k, el.querySelector('img'));
+  if (m.type === 'img') lazyImg(k, el.querySelector('img'));
 
   const mine = m.uid === S.uid;
-  if (mine || nearBottom) box.scrollTop = box.scrollHeight;
+  if (mine || nearBottom) stickBottom();
   if (!mine && m.ts > S.lastRead && m.type !== 'ping') {
     if (S.tab === 'chat' && !document.hidden) markRead(m.ts);
     else { S.unread++; renderUnread(); }
@@ -1177,12 +1212,36 @@ function addMsg(k, m) {
   }
 }
 
+// Chat keeps a cheap "am I near the bottom" flag (no layout reads per message) and scrolls once per frame.
+let msgNear = true, stickQueued = false;
+function stickBottom() {
+  if (stickQueued) return;
+  stickQueued = true;
+  requestAnimationFrame(() => { stickQueued = false; const b = $('msgs'); b.scrollTop = b.scrollHeight; msgNear = true; });
+}
+
+// Photos are fetched only when they scroll near the screen (opening a chat with many photos no longer downloads them all).
+let imgObs = null;
+function lazyImg(k, imgEl) {
+  if (S.imgCache.has(k) || !('IntersectionObserver' in window)) return loadImg(k, imgEl);
+  imgObs = imgObs || new IntersectionObserver((es) => {
+    for (const e of es) {
+      if (!e.isIntersecting) continue;
+      imgObs.unobserve(e.target);
+      loadImg(e.target.dataset.lk, e.target);
+    }
+  }, { root: $('msgs'), rootMargin: '400px 0px' });
+  imgEl.dataset.lk = k;
+  imgObs.observe(imgEl);
+}
+
 async function loadImg(k, imgEl) {
   let data = S.imgCache.get(k);
   if (!data) {
     try { data = await S.be.get(P(`imgs/${k}`)); } catch { data = null; }
     if (data) S.imgCache.set(k, data);
   }
+  imgEl.decoding = 'async';
   if (data) imgEl.src = data; else imgEl.alt = 'ໂຫຼດຮູບບໍ່ໄດ້';
 }
 
@@ -1373,8 +1432,11 @@ function inviteUrl() {
 }
 
 let qrFor = null;
+let tripDirty = false;
 function renderTrip() {
   if (!S.code) return;
+  if (S.tab !== 'trip') { tripDirty = true; return; }
+  tripDirty = false;
   const isOwner = S.info?.owner === S.uid;
   const n = Object.keys(S.members).length;
   $('trip-title').textContent = S.info?.name || 'ທຣິບ';
@@ -1460,7 +1522,9 @@ function switchTab(t) {
   S.tab = t;
   for (const id of ['map', 'chat', 'exp', 'trip']) $('t-' + id).hidden = id !== t;
   document.querySelectorAll('nav.tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
-  if (t === 'map' && map) setTimeout(() => map.invalidateSize(), 30);
+  if (t === 'map') { renderCards(); renderMap(); if (map) setTimeout(() => map.invalidateSize(), 30); }
+  if (t === 'trip') renderTrip();
+  if (t === 'exp') EXP.render();
   if (t === 'chat') {
     const box = $('msgs');
     box.scrollTop = box.scrollHeight;
@@ -1616,6 +1680,10 @@ function wireUi() {
   $('c-all').onclick = fitAll;
   $('c-meet').onclick = () => setPicking(!S.picking);
   $('pick-cancel').onclick = () => setPicking(false);
+  const strip = $('cards');
+  for (const ev of ['touchstart', 'pointerdown']) strip.addEventListener(ev, cardsHold, { passive: true });
+  for (const ev of ['touchend', 'touchcancel', 'pointerup', 'pointercancel']) strip.addEventListener(ev, cardsRelease, { passive: true });
+  strip.addEventListener('scroll', () => { cardsHold(); cardsRelease(); }, { passive: true });
   $('cards').addEventListener('click', (e) => {
     const card = e.target.closest('.mcard');
     if (!card) return;
@@ -1648,6 +1716,7 @@ function wireUi() {
   $('m-stk').onclick = openStickers;
   $('m-photo').onclick = () => $('m-file').click();
   $('m-file').onchange = (e) => { sendPhoto(e.target.files[0]); e.target.value = ''; };
+  $('msgs').addEventListener('scroll', () => { const b = $('msgs'); msgNear = b.scrollHeight - b.scrollTop - b.clientHeight < 140; }, { passive: true });
   $('msgs').addEventListener('click', (e) => {
     const card = e.target.closest('[data-act]');
     if (!card) return;

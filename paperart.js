@@ -101,11 +101,14 @@ export function installDefs() {
 }
 
 /** Fill every <div class="scene-strip"> that is still empty. */
+const sceneCache = new Map();
 export function paintScenes(root = document) {
   installDefs();
   root.querySelectorAll('.scene-strip:not([data-done])').forEach((el, i) => {
     el.dataset.done = '1';
     const seed = +el.dataset.seed || 3 + i * 7;
-    el.innerHTML = scene({ seed, withCity: el.dataset.city !== '0' });
+    const ck = `${seed}|${el.dataset.city}`;
+    if (!sceneCache.has(ck)) sceneCache.set(ck, scene({ seed, withCity: el.dataset.city !== '0' }));
+    el.innerHTML = sceneCache.get(ck);
   });
 }
