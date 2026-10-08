@@ -46,6 +46,9 @@
 
 ---
 
+> ✅ **ເຮັດແລ້ວ (2026-10-08):** project `tripmate-2001c` (Singapore), Anonymous sign-in ເປີດ, ກົດ `database.rules.json` ເຜີຍແຜ່ແລ້ວ, `config.js` ໃສ່ແລ້ວ. ຂັ້ນຕອນລຸ່ມນີ້ໃຊ້ຖ້າຕ້ອງສ້າງ project ໃໝ່.
+> ແລ່ນທົດສອບໃນເຄື່ອງ: `python devserver.py 8767` (ບໍ່ cache) ແລ້ວເປີດ `http://localhost:8767/?as=a` ແລະ `?as=b` ເປັນໝູ່ 2 ຄົນ.
+
 ## ຂັ້ນຕອນທີ 1 — ສ້າງ Firebase (ປະມານ 10 ນາທີ, ຟຣີ)
 
 1. ເຂົ້າ <https://console.firebase.google.com> ດ້ວຍບັນຊີ Google → **Create a project** → ຕັ້ງຊື່ເຊັ່ນ `tripmate` → ປິດ Google Analytics ໄດ້ → Create
