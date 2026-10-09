@@ -343,6 +343,30 @@ function exitTrip(message) {
   if (message) toast(message);
 }
 
+// Move to another trip (or to the home screen to create/join a new one) without leaving this one: you stay a member,
+// only the live session here stops. Friends here just see you go offline.
+async function switchTripMenu() {
+  const others = store.get('recent', []).filter((r) => r.code !== S.code);
+  const rows = others.map((r) => {
+    const h = hash(r.code);
+    return `<button class="btn block" data-sw="${esc(r.code)}" style="justify-content:flex-start;gap:10px;margin-bottom:8px"><span style="width:28px;display:inline-flex">${ic(TRIP_ICON[h % TRIP_ICON.length])}</span><span style="text-align:left"><b>${esc(r.name)}</b> <small class="muted">${esc(r.code)}</small></span></button>`;
+  }).join('');
+  const close = modal({
+    title: 'ປ່ຽນ / ເພີ່ມທຣິບ',
+    html: `<p class="muted" style="margin-top:0">ທຣິບປັດຈຸບັນ: <b>${esc(S.info?.name || S.code)}</b> — ຍັງເປັນສະມາຊິກຢູ່, ບໍ່ຖືກລຶບ.</p>${rows || '<p class="muted">ຍັງບໍ່ມີທຣິບອື່ນ</p>'}
+      <button class="btn primary block" data-new="1">+ ສ້າງ ຫຼື ເຂົ້າຮ່ວມທຣິບໃໝ່</button>`,
+    actions: [{ label: 'ປິດ' }],
+  });
+  const bg = $('modal-root').lastElementChild;
+  bg.addEventListener('click', async (e) => {
+    const sw = e.target.closest('[data-sw]'), nw = e.target.closest('[data-new]');
+    if (!sw && !nw) return;
+    close();
+    exitTrip(null);
+    if (sw) await joinTrip(sw.dataset.sw);
+  });
+}
+
 async function leaveTrip() {
   if (!(await confirmBox('ອອກຈາກທຣິບ?', 'ໝູ່ຈະບໍ່ເຫັນຕຳແໜ່ງຂອງເຈົ້າອີກ. ເຂົ້າຄືນໄດ້ດ້ວຍລະຫັດທຣິບ.', 'ອອກ', true))) return;
   S.leaving = true;
@@ -1765,6 +1789,7 @@ function wireUi() {
   $('edit-me').onclick = () => showProfile(true);
   $('members').addEventListener('click', (e) => { const b = e.target.closest('[data-kick]'); if (b) removeMember(b.dataset.kick); });
   $('leave').onclick = leaveTrip;
+  $('switch-trip').onclick = switchTripMenu;
   $('delete-trip').onclick = deleteTrip;
 }
 
