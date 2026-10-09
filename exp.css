@@ -112,3 +112,6 @@
 
 .del-exp{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface-2);border-radius:16px;padding:10px 12px;margin-top:8px}
 .del-exp b{width:100%;font-size:13px}
+
+.x-note{font-size:12px;color:var(--muted);line-height:1.5;padding:8px 2px 0;border-top:1px dashed var(--line)}
+.x-per-t span{display:block}

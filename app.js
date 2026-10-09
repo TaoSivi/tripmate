@@ -1135,7 +1135,7 @@ function msgHtml(k, m) {
       body = `<div class="bubble cm sos" data-act="loc"><div class="cm-ic">${ic('sos')}</div><div><div class="ct">${esc(name)} ຂໍຄວາມຊ່ວຍເຫຼືອ!</div><div class="cs">${m.lat != null ? dist + 'ແຕະເບິ່ງຕຳແໜ່ງ' : 'ບໍ່ມີຕຳແໜ່ງ GPS'}</div></div></div>`; break;
     case 'exp': {
       const pay = m.kind === 'pay';
-      body = `<div class="bubble cm exp" data-act="exp"><div class="cm-ic">${ic(pay ? 'coin' : 'wallet')}</div><div><div class="ct">${esc(memberName(m.by || m.uid, m.name))} ${pay ? `ໂອນ ${M.fmtMoney(m.amt, m.cur)} ໃຫ້ ${esc(memberName(m.to))}` : `ຈ່າຍ ${M.fmtMoney(m.amt, m.cur)}`}</div><div class="cs">${esc(m.text || '')}${m.kind === 'pay' ? '' : ` · <b class="sp-${m.sk || 'all'}">${m.sk === 'none' ? 'ບໍ່ຫານ' : m.sk === 'some' ? `ຫານ ${m.n || ''} ຄົນ` : 'ຫານທັງໝົດ'}</b>${m.bill ? ' · ມີບິນ' : ' · ບໍ່ມີບິນ'}`} · ແຕະເບິ່ງ</div></div></div>`;
+      body = `<div class="bubble cm exp" data-act="exp"><div class="cm-ic">${ic(pay ? 'coin' : 'wallet')}</div><div><div class="ct">${esc(memberName(m.by || m.uid, m.name))} ${pay ? `ໂອນ ${M.fmtMoney(m.amt, m.cur)} ໃຫ້ ${esc(memberName(m.to))}` : `ຈ່າຍ ${M.fmtMoney(m.amt, m.cur)}`}</div><div class="cs">${esc(m.text || '')}${m.kind === 'pay' ? '' : ` · <b class="sp-${m.sk || 'all'}">${m.sk === 'none' ? 'ບໍ່ຫານ' : m.sk === 'some' ? `ຫານ ${m.n || ''} ຄົນ` : `ຫານທັງໝົດ${m.n ? ' ' + m.n + ' ຄົນ' : ''}`}</b>${m.sk !== 'none' && m.n > 0 ? ` · ຄົນລະ ${M.fmtMoney(Math.floor(m.amt / m.n), m.cur)}` : ''}${m.bill ? ' · ມີບິນ' : ' · ບໍ່ມີບິນ'}`} · ແຕະເບິ່ງ</div></div></div>`;
       break;
     }
     case 'stk':

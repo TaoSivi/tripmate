@@ -1,5 +1,5 @@
 // Service worker: app works offline after first visit; map tiles you've seen stay cached.
-const VERSION = 'tm-v10';
+const VERSION = 'tm-v11';
 const SHELL = ['./', './index.html', './app.js', './lib.js', './backend.js', './fx.js', './fx.css', './money.js', './expenses.js', './exp.css', './paper.css', './icons.js', './paperart.js', './push.js', './config.js', './manifest.webmanifest', './icons/icon-192.png'];
 const CDN = /^https:\/\/(cdnjs\.cloudflare\.com|www\.gstatic\.com\/firebasejs|fonts\.googleapis\.com|fonts\.gstatic\.com)\//;
 const TILE = /^https:\/\/(tile\.openstreetmap\.org|server\.arcgisonline\.com)\//;

@@ -94,8 +94,9 @@ export function createExpenses(ctx) {
         </div>
         <div class="x-card"><h3>ຍອດແຕ່ລະຄົນ</h3>${people.map(([u, r]) => `
           <div class="x-per">${avatar(S.members[u] || { name: nameOf(u) }, 'sm')}<div class="x-per-t"><b>${esc(u === S.uid ? `${nameOf(u)} (ຂ້ອຍ)` : nameOf(u))}</b>
-            <span>ຈ່າຍ ${M.fmtMoney(r.paid, cur)} · ສ່ວນຕົວ ${M.fmtMoney(r.owed, cur)}</span></div>
-            <span class="x-net ${r.net > 0 ? 'pos' : r.net < 0 ? 'neg' : ''}">${r.net === 0 ? 'ພໍດີ' : M.fmtMoney(r.net, cur, { sign: true })}</span></div>`).join('')}
+            <span>ຈ່າຍອອກໄປ ${M.fmtMoney(r.paid, cur)}<br>ສ່ວນທີ່ຕົນຕ້ອງຮັບ ${M.fmtMoney(r.owed, cur)}</span></div>
+            <span class="x-net ${r.net > 0 ? 'pos' : r.net < 0 ? 'neg' : ''}">${r.net === 0 ? 'ພໍດີ' : r.net > 0 ? `ໄດ້ຄືນ ${M.fmtMoney(r.net, cur)}` : `ຕ້ອງຄືນ ${M.fmtMoney(-r.net, cur)}`}</span></div>`).join('')}
+          <div class="x-note">ໄດ້ຄືນ = ຈ່າຍໃຫ້ໝູ່ຫຼາຍກວ່າສ່ວນຂອງຕົນ · ຕ້ອງຄືນ = ໝູ່ຈ່າຍແທນໄປແລ້ວ. ລາຍການ "ບໍ່ຫານ" ນັບເປັນສ່ວນຕົວຂອງຜູ້ຈ່າຍ ບໍ່ມີໃຜຕ້ອງຄືນ.</div>
         </div>`;
     }
     if (missing.length) {
