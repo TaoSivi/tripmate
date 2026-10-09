@@ -307,6 +307,7 @@ html.ios .glass,html.ios .modal-bg,html.ios .toast,html.ios .fx-banner,html.ios 
 .composer{flex:none;display:flex;gap:6px;align-items:flex-end;margin:4px 10px 8px;padding:6px;border-radius:26px}
 .composer textarea{flex:1;min-height:44px;max-height:120px;resize:none;border:0;border-radius:20px;padding:10px 12px;background:transparent;line-height:1.5}
 .composer textarea:focus{outline:0}
+.icon-btn.tb-add{width:38px;height:38px;margin-left:2px}
 .icon-btn{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--surface-2);display:grid;place-items:center;cursor:pointer;color:var(--brand)}
 .icon-btn svg{width:22px;height:22px}
 .icon-btn.send{background:var(--grad);color:#fff;box-shadow:0 6px 14px rgba(13,148,136,.35)}
@@ -432,6 +433,7 @@ html.ios .glass,html.ios .modal-bg,html.ios .toast,html.ios .fx-banner,html.ios 
       <div class="glass topbar">
         <div class="grow"><div class="tb-title" id="map-title"></div><div class="tb-sub" id="map-sub"></div></div>
         <div class="stack" id="map-stack"></div>
+        <button class="icon-btn tb-add" id="tb-switch" aria-label="ປ່ຽນ ຫຼື ເພີ່ມທຣິບ"><i data-ic="plus"></i></button>
       </div>
       <div id="sos-mine" class="sos-bar" hidden>
         <span class="grow">🆘 ກຳລັງສົ່ງ SOS ຫາໝູ່…</span>
@@ -489,6 +491,7 @@ html.ios .glass,html.ios .modal-bg,html.ios .toast,html.ios .fx-banner,html.ios 
 
   <section class="tab" id="t-trip" hidden>
     <div class="scroll">
+      <button id="switch-trip-top" class="btn block" style="margin:0 0 12px"><i data-ic="plus"></i> ສ້າງ / ເຂົ້າຮ່ວມທຣິບໃໝ່ ຫຼື ປ່ຽນທຣິບ</button>
       <div class="trip-hero">
         <div class="scene-strip trip-scene" data-seed="13"></div>
         <h2 id="trip-title"></h2>

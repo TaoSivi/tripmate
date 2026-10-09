@@ -1789,7 +1789,7 @@ function wireUi() {
   $('edit-me').onclick = () => showProfile(true);
   $('members').addEventListener('click', (e) => { const b = e.target.closest('[data-kick]'); if (b) removeMember(b.dataset.kick); });
   $('leave').onclick = leaveTrip;
-  $('switch-trip').onclick = switchTripMenu;
+  $('switch-trip').onclick = $('switch-trip-top').onclick = $('tb-switch').onclick = switchTripMenu;
   $('delete-trip').onclick = deleteTrip;
 }
 
